@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>执医第一站病例分析刷题台</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">330 真题 · 第一站病例分析</p>
+          <h1>病例分析刷题台</h1>
+        </div>
+        <div class="top-actions">
+          <div class="study-switch" role="group" aria-label="页面模式">
+            <button class="study-tab active" type="button" data-study-mode="practice">刷题模式</button>
+            <button class="study-tab" type="button" data-study-mode="memorize">背题模式</button>
+          </div>
+          <button class="icon-btn" id="shuffleBtn" title="随机抽题" aria-label="随机抽题">R</button>
+          <button class="icon-btn" id="resetBtn" title="重置本题" aria-label="重置本题">↺</button>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <aside class="rail">
+          <label class="field-label" for="practiceMode">抽题方式</label>
+          <select id="practiceMode">
+            <option value="system">按系统刷题</option>
+            <option value="random">随机抽题</option>
+          </select>
+
+          <label class="field-label" for="systemFilter">系统范围</label>
+          <select id="systemFilter"></select>
+
+          <label class="field-label" for="queueFilter">题队</label>
+          <select id="queueFilter">
+            <option value="all">全部题目</option>
+            <option value="wrong">错题</option>
+            <option value="partial">半对题</option>
+            <option value="favorite">收藏</option>
+            <option value="review">需复核</option>
+            <option value="unseen">未做</option>
+          </select>
+
+          <label class="field-label" for="searchInput">搜索题干</label>
+          <input id="searchInput" type="search" placeholder="症状 / 检查 / 题号" />
+
+          <div class="progress-panel">
+            <div>
+              <span class="metric" id="doneCount">0</span>
+              <span class="metric-label">已做</span>
+            </div>
+            <div>
+              <span class="metric" id="correctRate">0%</span>
+              <span class="metric-label">诊断正确率</span>
+            </div>
+          </div>
+
+          <div class="privacy-note">题单已隐藏诊断名称，先读题，再判断。</div>
+          <div class="queue-list" id="caseList"></div>
+        </aside>
+
+        <section class="case-stage">
+          <nav class="mode-tabs" id="practiceTabs" aria-label="训练模式">
+            <button class="tab active" data-mode="diagnosis">初步诊断</button>
+            <button class="tab" data-mode="tests">进一步检查</button>
+            <button class="tab" data-mode="treatment">治疗原则</button>
+            <button class="tab" data-mode="differential">鉴别诊断</button>
+          </nav>
+
+          <article class="stem-panel" id="stemPanel">
+            <div class="case-meta">
+              <span id="caseBadge"></span>
+              <div class="case-actions">
+                <button class="pill-btn" id="favoriteBtn">收藏</button>
+                <button class="pill-btn" id="masteredBtn">掌握</button>
+              </div>
+            </div>
+            <div class="stem-text" id="stemText"></div>
+            <div class="evidence-legend hidden" id="evidenceLegend"></div>
+          </article>
+
+          <section class="answer-panel practice-panel" id="diagnosisMode">
+            <div class="answer-entry">
+              <label class="field-label" for="diagnosisInput">初步诊断</label>
+              <textarea id="diagnosisInput" rows="4" placeholder="先写主诊断；再补副诊断、部位、分型、并发症"></textarea>
+              <div class="button-row">
+                <button class="primary-btn" id="submitDiagnosisBtn">提交诊断</button>
+                <button class="secondary-btn" id="revealDxBtn">显示答案</button>
+              </div>
+              <div class="judge-box" id="judgeBox"></div>
+            </div>
+            <div class="answer-sections">
+              <section class="answer-section" data-section="initial">
+                <button class="section-title">初步诊断</button>
+                <div class="section-body" id="initialAnswer"></div>
+              </section>
+              <section class="answer-section" data-section="evidence">
+                <button class="section-title">诊断依据</button>
+                <div class="section-body muted" id="evidenceAnswer"></div>
+              </section>
+            </div>
+          </section>
+
+          <section class="answer-panel practice-panel hidden" id="testsMode">
+            <div class="answer-entry">
+              <label class="field-label" for="testsInput">进一步检查</label>
+              <textarea id="testsInput" rows="4" placeholder="按要点写检查项目：实验室、影像、内镜/穿刺、病原学等"></textarea>
+              <div class="button-row">
+                <button class="primary-btn" id="submitTestsBtn">提交检查</button>
+                <button class="secondary-btn" id="revealTestsBtn">显示答案</button>
+              </div>
+              <div class="judge-box judge-idle" id="testJudgeBox">等待提交</div>
+            </div>
+            <div class="answer-sections">
+              <section class="answer-section" data-section="tests">
+                <button class="section-title">进一步检查</button>
+                <div class="section-body" id="testsAnswer"></div>
+              </section>
+            </div>
+          </section>
+
+          <section class="answer-panel practice-panel hidden" id="treatmentMode">
+            <div class="recall-header">
+              <h2>治疗原则突破</h2>
+              <div class="button-row">
+                <button class="secondary-btn" id="maskTreatmentBtn">遮罩</button>
+                <button class="primary-btn" id="showTreatmentBtn">显示</button>
+              </div>
+            </div>
+            <div class="cloze-list" id="treatmentList"></div>
+          </section>
+
+          <section class="answer-panel practice-panel hidden" id="differentialMode">
+            <div class="recall-header">
+              <h2>鉴别诊断记忆</h2>
+              <button class="primary-btn" id="showDifferentialBtn">显示</button>
+            </div>
+            <div class="chip-board" id="differentialBoard"></div>
+          </section>
+
+          <section class="memorize-stage hidden" id="memorizeMode">
+            <section class="memorize-block">
+              <div class="recall-header">
+                <h2>五段总览</h2>
+                <span class="subtle" id="memorizeCaseLabel"></span>
+              </div>
+              <div class="five-grid" id="fiveGrid"></div>
+            </section>
+
+            <section class="memorize-block">
+              <div class="recall-header">
+                <h2>快速记忆</h2>
+                <input id="memorySearch" type="search" placeholder="搜索疾病或公式" />
+              </div>
+              <div class="memory-grid" id="memoryBoard"></div>
+            </section>
+
+            <section class="memorize-block">
+              <div class="recall-header">
+                <h2>常见检查指标速记</h2>
+                <input id="labSearch" type="search" placeholder="搜索 WBC / Scr / 血糖 / 血气" />
+              </div>
+              <div class="lab-grid" id="labBoard"></div>
+            </section>
+          </section>
+
+          <footer class="navigator">
+            <button class="secondary-btn" id="prevBtn">上一题</button>
+            <span id="positionLabel"></span>
+            <button class="primary-btn" id="nextBtn">下一题</button>
+          </footer>
+        </section>
+      </main>
+    </div>
+
+    <script src="./data.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
